@@ -15,20 +15,30 @@ class ViewController: UIViewController {
     var drawingSize = CGSize.zero
     override func viewDidLoad() {
         super.viewDidLoad()
-        drawingSize = CGSize(width: drawingView.bounds.width * drawingView.contentScaleFactor,
-                             height: drawingView.bounds.height * drawingView.contentScaleFactor)
+        
         // Do any additional setup after loading the view.
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        self.drawingView.setNeedsDisplay()
+        drawingSize = CGSize(width: drawingView.bounds.width * drawingView.contentScaleFactor,
+                             height: drawingView.bounds.height * drawingView.contentScaleFactor)
+    }
 
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesBegan(touches, with: event)
         self.counter = 0
         UIGraphicsBeginImageContext(drawingSize)
+        if let _context = UIGraphicsGetCurrentContext() {
+            UIColor.red.setFill()
+            _context.fill(CGRect(origin: .zero, size: drawingSize))
+            UIColor.black.setFill()
+        }
         for touch in touches {
-            let _point = touch.preciseLocation(in: self.view)
-            self.points[self.counter] = CGPoint(x: _point.x, y: UIScreen.main.bounds.height - _point.y) // * drawingView.contentScaleFactor
+            let _point = touch.preciseLocation(in: self.drawingView)
+            self.points[self.counter] = CGPoint(x: _point.x , y: drawingView.bounds.height - _point.y) // * drawingView.contentScaleFactor
             break
         }
         
@@ -37,14 +47,14 @@ class ViewController: UIViewController {
     override func touchesMoved(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesMoved(touches, with: event)
         for touch in touches {
-            self.draw(inPoint: touch.preciseLocation(in: self.view))
+            self.draw(inPoint: touch.preciseLocation(in: self.drawingView))
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         super.touchesEnded(touches, with: event)
         for touch in touches {
-            self.draw(inPoint: touch.preciseLocation(in: self.view))
+            self.draw(inPoint: touch.preciseLocation(in: self.drawingView))
         }
         
         UIGraphicsEndImageContext()
@@ -55,7 +65,7 @@ class ViewController: UIViewController {
     
     func draw(inPoint:CGPoint){
         self.counter += 1
-        self.points[self.counter] = CGPoint(x: inPoint.x, y: UIScreen.main.bounds.height - inPoint.y) //* drawingView.contentScaleFactor
+        self.points[self.counter] = CGPoint(x: inPoint.x , y: drawingView.bounds.height - inPoint.y ) //
         if self.counter == 4 {
             self.points[3] = CGPoint(x: (self.points[2].x + self.points[4].x)/2.0,
                                      y: (self.points[2].y + self.points[4].y)/2.0)
@@ -103,7 +113,7 @@ class ViewController: UIViewController {
             let _x = self.makeBazier1(t: CGFloat(i), points: _xs)
             let _y = self.makeBazier1(t: CGFloat(i), points: _ys)
             if let _context = UIGraphicsGetCurrentContext() {
-                _context.addEllipse(in: CGRect.init(origin: CGPoint(x: _x, y: _y) * self.drawingView.contentScaleFactor,
+                _context.addEllipse(in: CGRect.init(origin: CGPoint(x: _x, y: _y) ,
                                                     size: CGSize(width: dotSize, height: dotSize)))
     //            _context.move(to: CGPoint(x: 0, y: <#T##CGFloat#>))
                 _context.drawPath(using: .fill)
