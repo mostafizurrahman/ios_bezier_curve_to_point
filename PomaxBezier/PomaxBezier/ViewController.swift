@@ -27,7 +27,8 @@ class ViewController: UIViewController {
         self.counter = 0
         UIGraphicsBeginImageContext(drawingSize)
         for touch in touches {
-            self.points[self.counter] = touch.preciseLocation(in: self.drawingView)  * drawingView.contentScaleFactor
+            let _point = touch.preciseLocation(in: self.view)
+            self.points[self.counter] = CGPoint(x: _point.x, y: UIScreen.main.bounds.height - _point.y) // * drawingView.contentScaleFactor
             break
         }
         
@@ -54,21 +55,31 @@ class ViewController: UIViewController {
     
     func draw(inPoint:CGPoint){
         self.counter += 1
-        self.points[self.counter] = inPoint * drawingView.contentScaleFactor
+        self.points[self.counter] = CGPoint(x: inPoint.x, y: UIScreen.main.bounds.height - inPoint.y) //* drawingView.contentScaleFactor
         if self.counter == 4 {
             self.points[3] = CGPoint(x: (self.points[2].x + self.points[4].x)/2.0,
                                      y: (self.points[2].y + self.points[4].y)/2.0)
-            let path = UIBezierPath()
-            path.move(to: self.points[0])
-            path.addCurve(to: self.points[3], controlPoint1: self.points[1], controlPoint2: self.points[2])
-            if let _context = UIGraphicsGetCurrentContext() {
-                _context.addPath(path.cgPath)
-                _context.drawPath(using: .stroke)
-                _context.strokePath()
-                if let image = _context.makeImage() {
-                    self.drawingView.image = image
+            let _xs = [points[0].x, points[1].x, points[2].x, points[3].x]
+            let _ys = [points[0].y, points[1].y, points[2].y, points[3].y]
+            for i in stride(from: 0.1, to: 1.0, by: Double.Stride(0.1)){
+                let _x = self.makeBezier(t: CGFloat(i), points: _xs)
+                let _y = self.makeBezier(t: CGFloat(i), points: _ys)
+//                let path = UIBezierPath()
+//                path.move(to: self.points[0])
+//                path.addCurve(to: self.points[3], controlPoint1: self.points[1], controlPoint2: self.points[2])
+                if let _context = UIGraphicsGetCurrentContext() {
+                    _context.addEllipse(in: CGRect.init(origin: CGPoint(x: _x, y: _y) * self.drawingView.contentScaleFactor,
+                                                        size: CGSize(width: dotSize, height: dotSize)))
+//                    _context.addPath(path.cgPath)
+                    _context.drawPath(using: .fill)
+                    _context.fillPath()
+                    if let image = _context.makeImage() {
+                        self.drawingView.image = image
+                    }
                 }
+                
             }
+            
             self.points[0] = self.points[3]
             self.points[1] = self.points[4]
             self.counter = 1
@@ -138,7 +149,7 @@ class ViewController: UIViewController {
 }
 
 func *(_ a:CGPoint, _ b:CGFloat)->CGPoint{
-    return CGPoint(x: a.x * b - dotSize / 2, y: (UIScreen.main.bounds.height - a.y) * b - dotSize / 2)
+    return CGPoint(x: a.x * b - dotSize / 2, y: ( a.y) * b - dotSize / 2)
 }
 
 extension Array where Iterator.Element == CGPoint {
